@@ -1,5 +1,5 @@
 
-import { Bank, Category, Transaction, TransactionType, User } from './types';
+import { Bank, Category, Transaction, TransactionType, User, BackupConfig } from './types';
 import { v4 as uuidv4 } from 'uuid'; 
 
 export const generateId = () => Math.random().toString(36).substr(2, 9);
@@ -11,12 +11,22 @@ export const STORAGE_KEYS = {
   TRANSACTIONS: 'ff_transactions_v2',
   THEME: 'ff_theme_v2',
   LOGO: 'ff_logo_v1',
-  USERS: 'ff_users_v1'
+  USERS: 'ff_users_v1',
+  BACKUP_CONFIG: 'ff_backup_config_v1'
 };
 
 export const INITIAL_USERS: User[] = [
   { id: 'user_master', username: 'admin', password: '1234', role: 'MASTER', name: 'Super Admin' }
 ];
+
+export const INITIAL_BACKUP_CONFIG: BackupConfig = {
+  enabled: false,
+  email: '',
+  dayOfWeek: '5', // Default Friday
+  time: '09:00', // Default 9 AM
+  lastBackupDate: '',
+  history: []
+};
 
 export const INITIAL_BANKS: Bank[] = [
   { id: 'bank_intesa', name: 'INTESA', colorClass: 'bg-blue-100' },

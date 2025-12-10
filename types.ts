@@ -48,3 +48,20 @@ export interface DailyData {
   bankBalances: Record<string, number>; // bankId -> balance
   categoryAmounts: Record<string, number>; // categoryId -> total amount for day
 }
+
+export interface BackupHistoryItem {
+    id: string;
+    date: string; // ISO Timestamp
+    fileName: string;
+    sizeBytes: number;
+    dataSnapshot: string; // Stringified JSON content
+}
+
+export interface BackupConfig {
+  enabled: boolean;
+  email: string;
+  dayOfWeek: string; // '0' for Sunday, '1' for Monday, etc.
+  time: string; // 'HH:mm' 24h format
+  lastBackupDate: string; // YYYY-MM-DD
+  history: BackupHistoryItem[];
+}

@@ -1,7 +1,8 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
-import { Settings, Plus, ChevronLeft, ChevronRight, LayoutGrid, CalendarRange, Pencil, Palette, Moon, Sun, Grid3X3, FileBarChart, Users as UsersIcon, LogOut, LayoutDashboard } from 'lucide-react';
-import { Bank, Category, Transaction, DailyData, User } from './types';
-import { INITIAL_BANKS, INITIAL_CATEGORIES, INITIAL_TRANSACTIONS, INITIAL_USERS, STORAGE_KEYS } from './constants';
+import { Settings, Plus, ChevronLeft, ChevronRight, LayoutGrid, CalendarRange, Pencil, Palette, Moon, Sun, Grid3X3, FileBarChart, Users as UsersIcon, LogOut, LayoutDashboard, Download, Mail } from 'lucide-react';
+import { Bank, Category, Transaction, DailyData, User, BackupConfig } from './types';
+import { INITIAL_BANKS, INITIAL_CATEGORIES, INITIAL_TRANSACTIONS, INITIAL_USERS, STORAGE_KEYS, INITIAL_BACKUP_CONFIG } from './constants';
 import { formatCurrency, formatDateShort, getDayName, getItalyDateStr } from './utils/formatters';
 import { TransactionModal } from './components/TransactionModal';
 import { SettingsModal } from './components/SettingsModal';
@@ -52,6 +53,7 @@ function App() {
   // Modals
   const [isTxModalOpen, setIsTxModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [showAutoBackupModal, setShowAutoBackupModal] = useState(false); // New Modal State
   const [selectedDateForTx, setSelectedDateForTx] = useState<string>('');
   const [editingTx, setEditingTx] = useState<Transaction | null>(null);
   const [editingBalanceBank, setEditingBalanceBank] = useState<Bank | null>(null);
@@ -66,6 +68,102 @@ function App() {
       if(logo) localStorage.setItem(STORAGE_KEYS.LOGO, logo);
       else localStorage.removeItem(STORAGE_KEYS.LOGO);
   }, [logo]);
+
+  // --- Automatic Backup Logic ---
+  useEffect(() => {
+    if (!currentUser) return; // Only check if logged in
+
+    const checkBackup = () => {
+        const configStr = localStorage.getItem(STORAGE_KEYS.BACKUP_CONFIG);
+        const config: BackupConfig = configStr ? JSON.parse(configStr) : INITIAL_BACKUP_CONFIG;
+
+        if (!config.enabled) return;
+
+        const today = new Date();
+        const currentDayOfWeek = today.getDay().toString(); // 0-6
+        const dateStr = getItalyDateStr(today);
+
+        // Check Time
+        const [targetHour, targetMinute] = (config.time || '09:00').split(':').map(Number);
+        const currentHour = today.getHours();
+        const currentMinute = today.getMinutes();
+        
+        // Is it time? (Current time >= Target time)
+        const isTimeDue = currentHour > targetHour || (currentHour === targetHour && currentMinute >= targetMinute);
+
+        // Logic: If Today matches Config Day AND we haven't backed up today yet AND it is past the time
+        if (config.dayOfWeek === currentDayOfWeek && config.lastBackupDate !== dateStr && isTimeDue) {
+            setShowAutoBackupModal(true);
+        }
+    };
+    
+    checkBackup();
+    
+    // Check every minute just in case app is left open
+    const interval = setInterval(checkBackup, 60000);
+    return () => clearInterval(interval);
+
+  }, [currentUser]);
+
+  const handleExecuteAutoBackup = () => {
+      const configStr = localStorage.getItem(STORAGE_KEYS.BACKUP_CONFIG);
+      let config: BackupConfig = configStr ? JSON.parse(configStr) : INITIAL_BACKUP_CONFIG;
+
+      // 1. Generate Backup Data
+      const dataToBackup = {
+          timestamp: new Date().toISOString(),
+          version: '1.0',
+          data: {
+              banks: localStorage.getItem(STORAGE_KEYS.BANKS),
+              categories: localStorage.getItem(STORAGE_KEYS.CATEGORIES),
+              transactions: localStorage.getItem(STORAGE_KEYS.TRANSACTIONS),
+              users: localStorage.getItem(STORAGE_KEYS.USERS),
+              theme: localStorage.getItem(STORAGE_KEYS.THEME),
+              logo: localStorage.getItem(STORAGE_KEYS.LOGO)
+          }
+      };
+
+      const jsonString = JSON.stringify(dataToBackup, null, 2);
+      const fileName = `finanzaflow_auto_backup_${getItalyDateStr(new Date())}.json`;
+
+      // 2. Download File
+      const blob = new Blob([jsonString], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // 3. Update Config (Last Backup Date & History)
+      const newHistoryItem = {
+          id: Math.random().toString(36).substr(2, 9),
+          date: new Date().toISOString(),
+          fileName: fileName,
+          sizeBytes: blob.size,
+          dataSnapshot: jsonString
+      };
+
+      // Add to history, sort by date desc, keep max 5
+      const updatedHistory = [newHistoryItem, ...(config.history || [])]
+          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+          .slice(0, 5);
+
+      config.lastBackupDate = getItalyDateStr(new Date());
+      config.history = updatedHistory;
+
+      localStorage.setItem(STORAGE_KEYS.BACKUP_CONFIG, JSON.stringify(config));
+
+      // 4. Open Email Client
+      if (config.email) {
+          const subject = encodeURIComponent("Backup Automatico FinanzaFlow");
+          const body = encodeURIComponent(`In allegato trovi il backup settimanale generato automaticamente.\n\nFile: ${fileName}\nData: ${new Date().toLocaleDateString()}`);
+          window.open(`mailto:${config.email}?subject=${subject}&body=${body}`, '_self');
+      }
+
+      setShowAutoBackupModal(false);
+  };
 
   // --- Calculation ---
   const timelineData = useMemo(() => {
@@ -548,6 +646,45 @@ function App() {
             onDeleteUser={handleDeleteUser}
             currentUserId={currentUser.id}
           />
+      )}
+
+      {/* AUTO BACKUP MODAL */}
+      {showAutoBackupModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm p-4">
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
+                <div className="bg-purple-600 p-6 flex flex-col items-center text-center text-white">
+                    <div className="bg-white/20 p-3 rounded-full mb-3">
+                        <Download size={32} />
+                    </div>
+                    <h2 className="text-xl font-bold">Backup Automatico Richiesto</h2>
+                    <p className="text-purple-100 text-sm mt-1">
+                        È programmato un backup per oggi.
+                    </p>
+                </div>
+                
+                <div className="p-6">
+                    <p className="text-gray-600 text-sm mb-6 text-center">
+                        Clicca qui sotto per scaricare il file di salvataggio e aprire automaticamente il tuo client di posta per l'invio.
+                    </p>
+
+                    <div className="space-y-3">
+                        <button 
+                            onClick={handleExecuteAutoBackup}
+                            className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-lg shadow-md transition-all flex items-center justify-center gap-2"
+                        >
+                            <Download size={18} />
+                            Esegui e Invia Email
+                        </button>
+                        <button 
+                            onClick={() => setShowAutoBackupModal(false)}
+                            className="w-full bg-white border border-gray-300 text-gray-600 hover:bg-gray-50 font-medium py-3 rounded-lg transition-colors"
+                        >
+                            Ricordamelo più tardi
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
       )}
 
       <TransactionModal 
