@@ -76,10 +76,6 @@ export const Login: React.FC<Props> = ({ users, onLogin }) => {
                     <ArrowRight size={18} />
                 </button>
             </form>
-
-            <div className="mt-6 text-center text-xs text-gray-400">
-                Default: admin / 1234
-            </div>
         </div>
       </div>
     </div>
