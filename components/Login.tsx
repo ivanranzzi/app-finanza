@@ -6,9 +6,12 @@ import { LayoutGrid, Lock, User as UserIcon, ArrowRight } from 'lucide-react';
 interface Props {
   users: User[];
   onLogin: (user: User) => void;
+  appTitle: string;
+  appSubtitle: string;
+  logo: string | null;
 }
 
-export const Login: React.FC<Props> = ({ users, onLogin }) => {
+export const Login: React.FC<Props> = ({ users, onLogin, appTitle, appSubtitle, logo }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -27,11 +30,17 @@ export const Login: React.FC<Props> = ({ users, onLogin }) => {
     <div className="min-h-screen flex items-center justify-center bg-slate-900 p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col">
         <div className="bg-indigo-600 p-8 text-center">
-            <div className="bg-white/20 w-16 h-16 rounded-xl flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
-                <LayoutGrid size={32} className="text-white" />
-            </div>
-            <h1 className="text-2xl font-bold text-white">FinanzaFlow Pro</h1>
-            <p className="text-indigo-200 text-sm mt-1">Cash Flow Management System</p>
+            {logo ? (
+                 <div className="w-24 h-24 bg-white rounded-xl flex items-center justify-center mx-auto mb-4 p-2 shadow-lg">
+                    <img src={logo} alt="Logo" className="w-full h-full object-contain" />
+                 </div>
+            ) : (
+                <div className="bg-white/20 w-16 h-16 rounded-xl flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
+                    <LayoutGrid size={32} className="text-white" />
+                </div>
+            )}
+            <h1 className="text-2xl font-bold text-white">{appTitle}</h1>
+            <p className="text-indigo-200 text-sm mt-1">{appSubtitle}</p>
         </div>
 
         <div className="p-8">

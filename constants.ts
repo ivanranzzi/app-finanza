@@ -11,6 +11,8 @@ export const STORAGE_KEYS = {
   TRANSACTIONS: 'ff_transactions_v2',
   THEME: 'ff_theme_v2',
   LOGO: 'ff_logo_v1',
+  APP_TITLE: 'ff_app_title_v1',
+  APP_SUBTITLE: 'ff_app_subtitle_v1',
   USERS: 'ff_users_v1',
   BACKUP_CONFIG: 'ff_backup_config_v1'
 };

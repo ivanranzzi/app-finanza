@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { Settings, Plus, ChevronLeft, ChevronRight, LayoutGrid, CalendarRange, Pencil, Palette, Moon, Sun, Grid3X3, FileBarChart, Users as UsersIcon, LogOut, LayoutDashboard, Download, Mail } from 'lucide-react';
+import { Settings, Plus, ChevronLeft, ChevronRight, LayoutGrid, CalendarRange, Pencil, Palette, Moon, Sun, Grid3X3, FileBarChart, Users as UsersIcon, LogOut, LayoutDashboard, Download, Mail, Database } from 'lucide-react';
 import { Bank, Category, Transaction, DailyData, User, BackupConfig } from './types';
 import { INITIAL_BANKS, INITIAL_CATEGORIES, INITIAL_TRANSACTIONS, INITIAL_USERS, STORAGE_KEYS, INITIAL_BACKUP_CONFIG } from './constants';
 import { formatCurrency, formatDateShort, getDayName, getItalyDateStr } from './utils/formatters';
@@ -11,9 +11,10 @@ import { BalanceModal } from './components/BalanceModal';
 import { Reports } from './components/Reports';
 import { Login } from './components/Login';
 import { UserManagement } from './components/UserManagement';
+import { BackupRestore } from './components/BackupRestore';
 import { Dashboard } from './components/Dashboard';
 
-type Tab = 'DASHBOARD' | 'TIMELINE' | 'INCOME' | 'REPORTS' | 'USERS';
+type Tab = 'DASHBOARD' | 'TIMELINE' | 'INCOME' | 'REPORTS' | 'BACKUP' | 'USERS';
 type Theme = 'MODERN' | 'EXCEL' | 'NEO';
 
 function App() {
@@ -26,6 +27,11 @@ function App() {
       return (localStorage.getItem(STORAGE_KEYS.THEME) as Theme) || 'NEO';
   });
   
+  // Customization State
+  const [appTitle, setAppTitle] = useState(() => localStorage.getItem(STORAGE_KEYS.APP_TITLE) || 'FinanzaFlow Pro');
+  const [appSubtitle, setAppSubtitle] = useState(() => localStorage.getItem(STORAGE_KEYS.APP_SUBTITLE) || 'Gestione Flussi di Cassa');
+  const [logo, setLogo] = useState<string | null>(() => localStorage.getItem(STORAGE_KEYS.LOGO));
+
   const [users, setUsers] = useState<User[]>(() => {
       const saved = localStorage.getItem(STORAGE_KEYS.USERS);
       return saved ? JSON.parse(saved) : INITIAL_USERS;
@@ -42,9 +48,6 @@ function App() {
   const [transactions, setTransactions] = useState<Transaction[]>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.TRANSACTIONS);
     return saved ? JSON.parse(saved) : INITIAL_TRANSACTIONS;
-  });
-  const [logo, setLogo] = useState<string | null>(() => {
-      return localStorage.getItem(STORAGE_KEYS.LOGO);
   });
 
   const [startDate, setStartDate] = useState(() => new Date());
@@ -68,6 +71,8 @@ function App() {
       if(logo) localStorage.setItem(STORAGE_KEYS.LOGO, logo);
       else localStorage.removeItem(STORAGE_KEYS.LOGO);
   }, [logo]);
+  useEffect(() => { localStorage.setItem(STORAGE_KEYS.APP_TITLE, appTitle); }, [appTitle]);
+  useEffect(() => { localStorage.setItem(STORAGE_KEYS.APP_SUBTITLE, appSubtitle); }, [appSubtitle]);
 
   // --- Automatic Backup Logic ---
   useEffect(() => {
@@ -288,6 +293,12 @@ function App() {
       setUsers(prev => prev.filter(u => u.id !== id));
   };
 
+  const handleUpdateAppConfig = (title: string, subtitle: string, newLogo: string | null) => {
+      setAppTitle(title);
+      setAppSubtitle(subtitle);
+      setLogo(newLogo);
+  };
+
   // --- Styles Generators ---
   const isNeo = theme === 'NEO';
   const isModern = theme === 'MODERN';
@@ -354,7 +365,15 @@ function App() {
 
   // --- Auth Check ---
   if (!currentUser) {
-      return <Login users={users} onLogin={setCurrentUser} />;
+      return (
+        <Login 
+            users={users} 
+            onLogin={setCurrentUser} 
+            appTitle={appTitle} 
+            appSubtitle={appSubtitle} 
+            logo={logo} 
+        />
+      );
   }
 
   return (
@@ -365,15 +384,15 @@ function App() {
         <div className="px-6 py-4 flex justify-between items-center">
             <div className="flex items-center gap-3">
                 {logo ? (
-                    <img src={logo} alt="Company Logo" className="h-12 w-auto object-contain rounded-md" />
+                    <img src={logo} alt="Logo Azienda" className="h-12 w-auto object-contain rounded-md" />
                 ) : (
                     <div className={`${isNeo ? 'bg-indigo-500' : isModern ? 'bg-indigo-600' : 'bg-green-600'} p-2 rounded-xl text-white shadow-lg shadow-indigo-500/30`}>
                         <LayoutGrid size={24} />
                     </div>
                 )}
                 <div>
-                    <h1 className={`text-xl font-bold tracking-tight ${textMainClass}`}>FinanzaFlow Pro</h1>
-                    <p className={`text-xs ${textSubClass}`}>Cash Flow Management</p>
+                    <h1 className={`text-xl font-bold tracking-tight ${textMainClass}`}>{appTitle}</h1>
+                    <p className={`text-xs ${textSubClass}`}>{appSubtitle}</p>
                 </div>
             </div>
 
@@ -399,7 +418,7 @@ function App() {
                     <span className="hidden sm:inline">{getThemeLabel()}</span>
                 </button>
 
-                {activeTab !== 'USERS' && activeTab !== 'DASHBOARD' && (
+                {activeTab !== 'USERS' && activeTab !== 'DASHBOARD' && activeTab !== 'BACKUP' && (
                     <button 
                         onClick={() => { setEditingTx(null); setSelectedDateForTx(''); setIsTxModalOpen(true); }}
                         className={`flex items-center gap-2 px-4 py-2 rounded-lg text-white transition-all text-sm font-medium shadow-sm hover:shadow-lg hover:-translate-y-0.5 ${isNeo ? 'bg-indigo-500 hover:bg-indigo-400 shadow-indigo-500/20' : isModern ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-green-600 hover:bg-green-700'}`}
@@ -458,7 +477,14 @@ function App() {
                 className={`py-3 border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'REPORTS' ? 'border-purple-500 text-purple-600' : 'border-transparent hover:text-gray-700'}`}
             >
                 <FileBarChart size={16} />
-                Relatórios
+                Report
+            </button>
+            <button 
+                onClick={() => setActiveTab('BACKUP')}
+                className={`py-3 border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'BACKUP' ? 'border-orange-500 text-orange-600' : 'border-transparent hover:text-gray-700'}`}
+            >
+                <Database size={16} />
+                Backup / Restore
             </button>
             
             {currentUser.role === 'MASTER' && (
@@ -565,7 +591,7 @@ function App() {
                                     <div className="flex justify-between items-center w-full group">
                                       <div className="flex items-center gap-2">
                                         <div className={`w-1 h-6 rounded-full ${isNeo ? 'bg-indigo-500 shadow-sm shadow-indigo-500/50' : isModern ? 'bg-indigo-500' : 'bg-blue-600'}`}></div>
-                                        <span>{bank.name} <span className={`text-xs font-normal ml-1 ${isNeo ? 'text-slate-400' : 'text-gray-500'}`}>(Saldo Liquido)</span></span>
+                                        <span>{bank.name} <span className={`text-xs font-normal ml-1 ${isNeo ? 'text-slate-400' : 'text-gray-500'} italic`}>(Saldo Disponibile)</span></span>
                                       </div>
                                       <button onClick={() => setEditingBalanceBank(bank)} className={`opacity-0 group-hover:opacity-100 p-1 rounded ${isNeo ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-black/10'}`}>
                                         <Pencil size={14} />
@@ -637,6 +663,17 @@ function App() {
             onLogoUpload={setLogo}
         />
       )}
+      
+      {activeTab === 'BACKUP' && (
+          <BackupRestore 
+            banks={banks}
+            categories={categories}
+            transactions={transactions}
+            users={users}
+            theme={theme}
+            logo={logo}
+          />
+      )}
 
       {activeTab === 'USERS' && currentUser.role === 'MASTER' && (
           <UserManagement 
@@ -696,7 +733,18 @@ function App() {
         initialDate={selectedDateForTx}
         transactionToEdit={editingTx}
       />
-      <SettingsModal isOpen={isSettingsModalOpen} onClose={() => setIsSettingsModalOpen(false)} banks={banks} categories={categories} onAddBank={(b) => setBanks([...banks, b])} onAddCategory={(c) => setCategories([...categories, c])} />
+      <SettingsModal 
+        isOpen={isSettingsModalOpen} 
+        onClose={() => setIsSettingsModalOpen(false)} 
+        banks={banks} 
+        categories={categories} 
+        onAddBank={(b) => setBanks([...banks, b])} 
+        onAddCategory={(c) => setCategories([...categories, c])}
+        appTitle={appTitle}
+        appSubtitle={appSubtitle}
+        appLogo={logo}
+        onUpdateAppConfig={handleUpdateAppConfig}
+      />
       <BalanceModal isOpen={!!editingBalanceBank} onClose={() => setEditingBalanceBank(null)} onSave={handleUpdateBalance} bankName={editingBalanceBank?.name || ''} currentAmount={editingBalanceBank ? (transactions.find(t => t.id === `init_${editingBalanceBank.id}`)?.amount || 0) : 0} />
     </div>
   );
