@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FinanzaFlow Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              excelGreen: '#00b050',
+              excelLightGreen: '#92d050',
+              excelYellow: '#ffff00',
+              excelBlue: '#9bc2e6',
+              excelTeal: '#538dd5',
+              excelHeader: '#c6e0b4',
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      /* Custom scrollbar for the timeline */
+      .timeline-scroll::-webkit-scrollbar {
+        height: 12px;
+        width: 12px;
+      }
+      .timeline-scroll::-webkit-scrollbar-track {
+        background: #f1f1f1;
+      }
+      .timeline-scroll::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 6px;
+      }
+      .timeline-scroll::-webkit-scrollbar-thumb:hover {
+        background: #555;
+      }
+      th, td {
+        white-space: nowrap;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.1/",
+    "react/": "https://aistudiocdn.com/react@^19.2.1/",
+    "react": "https://aistudiocdn.com/react@^19.2.1",
+    "uuid": "https://aistudiocdn.com/uuid@^13.0.0",
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.556.0",
+    "jspdf": "https://esm.sh/jspdf@2.5.1",
+    "jspdf-autotable": "https://esm.sh/jspdf-autotable@3.8.2",
+    "xlsx": "https://esm.sh/xlsx@0.18.5"
+  }
+}
+</script>
+</head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
