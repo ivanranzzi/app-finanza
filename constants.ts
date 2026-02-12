@@ -1,10 +1,8 @@
 
 import { Bank, Category, Transaction, TransactionType, User, BackupConfig } from './types';
-import { v4 as uuidv4 } from 'uuid'; 
 
 export const generateId = () => Math.random().toString(36).substr(2, 9);
 
-// Keys used for LocalStorage
 export const STORAGE_KEYS = {
   BANKS: 'ff_banks_v2',
   CATEGORIES: 'ff_categories_v2',
@@ -14,7 +12,8 @@ export const STORAGE_KEYS = {
   APP_TITLE: 'ff_app_title_v1',
   APP_SUBTITLE: 'ff_app_subtitle_v1',
   USERS: 'ff_users_v1',
-  BACKUP_CONFIG: 'ff_backup_config_v1'
+  BACKUP_CONFIG: 'ff_backup_config_v1',
+  CLOUD_CONFIG: 'ff_cloud_config_v1' // New key for SQL connection info
 };
 
 export const INITIAL_USERS: User[] = [
@@ -24,8 +23,8 @@ export const INITIAL_USERS: User[] = [
 export const INITIAL_BACKUP_CONFIG: BackupConfig = {
   enabled: false,
   email: '',
-  dayOfWeek: '5', // Default Friday
-  time: '09:00', // Default 9 AM
+  dayOfWeek: '5',
+  time: '09:00',
   lastBackupDate: '',
   history: []
 };
@@ -36,7 +35,6 @@ export const INITIAL_BANKS: Bank[] = [
 ];
 
 export const INITIAL_CATEGORIES: Category[] = [
-  // --- BANK INTESA Categories ---
   { id: 'cat_intesa_balance', name: 'Disponibilità liquida BANCA INTESA C/C', bankId: 'bank_intesa', isSystem: true },
   { id: 'cat_intesa_fido', name: 'FIDO DI CONTO', bankId: 'bank_intesa', isCreditLine: true },
   { id: 'cat_intesa_anticipo', name: 'ANTICIPO FATTURE (VISUALIZZAZIONE)', bankId: 'bank_intesa' },
@@ -44,8 +42,6 @@ export const INITIAL_CATEGORIES: Category[] = [
   { id: 'cat_intesa_fornitori', name: 'FORNITORI VARI, SPESE, COSTI', bankId: 'bank_intesa' },
   { id: 'cat_intesa_paghe', name: 'PAGHE DIPENDENTI', bankId: 'bank_intesa' },
   { id: 'cat_intesa_f24', name: 'F24, VECCHIE RATEAZIONI', bankId: 'bank_intesa' },
-  
-  // --- BANK MARCA Categories ---
   { id: 'cat_marca_balance', name: 'Disponibilità liquida BANCA DELLA MARCA', bankId: 'bank_marca', isSystem: true },
   { id: 'cat_marca_fido', name: 'FIDO DI CONTO', bankId: 'bank_marca', isCreditLine: true },
   { id: 'cat_marca_anticipo', name: 'ANTICIPO FATTURE', bankId: 'bank_marca' },
@@ -53,6 +49,4 @@ export const INITIAL_CATEGORIES: Category[] = [
   { id: 'cat_marca_fornitori', name: 'FORNITORI VARI, SPESE', bankId: 'bank_marca' },
 ];
 
-export const INITIAL_TRANSACTIONS: Transaction[] = [
-  // Starting empty to ensure clean slate with 0 balance
-];
+export const INITIAL_TRANSACTIONS: Transaction[] = [];
